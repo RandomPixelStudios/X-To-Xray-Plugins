@@ -66,3 +66,7 @@ Every call has a CPU budget. A plugin that exceeds it, or has 5 errors, is stopp
 - Review what a plugin does: the sandbox stops access to the computer, but a plugin with `world.mine` can still wreck a world.
 - **Bad plugin:** add the SHA-256 of its file to `revoked.json`.
 - **Stolen key:** a new key requires a new mod release. Rotate `INDEX_SIGNING_KEY` and update `PUBLIC_KEY` in `PluginRepository.java`.
+
+## Disclaimer
+
+Plugins are created by third parties and are used at your own risk. Random Pixel Studios does not guarantee that any plugin is safe, correct or free of errors, even after review. To the extent permitted by law, Random Pixel Studios is not responsible for damage caused by plugins, including lost worlds, lost data or problems with your computer.
