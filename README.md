@@ -33,7 +33,7 @@ xtx.on("block_mined", function(block, x, y, z)
 end)
 ```
 
-**[Read the step-by-step publishing guide](PUBLISHING.md)**, including how to create a pull request.
+**[Read the step-by-step publishing guide](publish.md)**, including how to create a pull request.
 
 ## API
 
