@@ -82,3 +82,7 @@ If a published plugin turns out to be harmful, it is blocked for all players.
 ## Need help?
 
 [Open an issue](https://github.com/RandomPixelStudios/X-To-Xray-Plugins/issues) and describe your problem.
+
+## Disclaimer
+
+Plugins are created by third parties and are used at your own risk. Random Pixel Studios does not guarantee that any plugin is safe, correct or free of errors, even after review. To the extent permitted by law, Random Pixel Studios is not responsible for damage caused by plugins, including lost worlds, lost data or problems with your computer.
