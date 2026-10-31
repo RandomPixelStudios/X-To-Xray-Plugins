@@ -3,7 +3,7 @@
   "format": 1,
   "id": "veinminer",
   "name": "Veinminer",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Mine Whole Ore-Veins At Once!",
   "author": "Random Pixel Studios",
   "categories": ["Mining"],
