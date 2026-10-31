@@ -33,7 +33,7 @@ xtx.on("block_mined", function(block, x, y, z)
 end)
 ```
 
-Test it by dragging the file onto the Plugins tab. Publish it with a pull request.
+**[Read the step-by-step publishing guide](PUBLISHING.md)**, including how to create a pull request.
 
 ## API
 
