@@ -33,7 +33,7 @@ Header rules:
 - The header must be the very first thing in the file.
 - `id`: 2 to 32 characters using `a-z`, `0-9`, `_` and `-`.
 - `version`: letters, digits, `.` and `_` only.
-- `permissions`: list only what your plugin needs. See the [API list](README.md#api).
+- `permissions`: list only what your plugin needs. See the [API reference](docs/api.md).
 
 ## 2. Test it
 

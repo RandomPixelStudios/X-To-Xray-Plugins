@@ -4,7 +4,7 @@ import argparse, datetime, json, os, pathlib, re, sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 KEYS = {"format", "id", "name", "version", "description", "author", "permissions", "categories"}
-PERMISSIONS = {"storage", "world.read", "world.mine", "entities.read", "render", "xray", "chat"}
+PERMISSIONS = {"storage", "world.read", "world.mine", "entities.read", "render", "xray", "chat", "chat.read", "hud", "player.read", "player.control", "input", "sound", "options"}
 HEADER = "--[[xtoxray"
 MAX_BYTES = 256 * 1024
 
