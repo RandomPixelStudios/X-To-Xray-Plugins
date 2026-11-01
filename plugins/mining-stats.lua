@@ -5,7 +5,7 @@
   "name": "Mining Stats",
   "version": "1.0.0",
   "description": "Counts the ores you mine and keeps your all-time totals",
-  "author": "Claude",
+  "author": "OreGoblin42",
   "categories": ["Mining", "Utility"],
   "permissions": ["chat", "storage"]
 }
