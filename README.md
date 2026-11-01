@@ -2,7 +2,7 @@
 
 The official plugin list for [X To Xray](https://github.com/RandomPixelStudios/X-To-Xray). Plugins merged here appear in the **Plugins** tab of the mod.
 
-Plugins are Lua scripts in a sandbox. They have no access to files, network, Java or Minecraft internals, only to the `xtx` API below. Jar files are refused.
+Plugins are Lua scripts in a sandbox. They have no access to files, network, Java or Minecraft internals, only to the [`xtx` API](docs/api.md). Jar files are refused.
 
 ## Write a plugin
 
@@ -37,24 +37,7 @@ end)
 
 ## API
 
-| Function | Permission |
-|---|---|
-| `xtx.log(text)` | none |
-| `xtx.on(event, fn)`: `tick`, `block_mined(block, x, y, z)`, `xray_toggle(active)`, `render` | `render` for `render` |
-| `xtx.setting(key)` | none |
-| `xtx.ui.toggle(key, label, default)` | none |
-| `xtx.ui.slider(key, label, min, max, default)` | none |
-| `xtx.ui.cycle(key, label, options, default)` | none |
-| `xtx.ui.blocks(key, label, ids)` | none |
-| `xtx.chat(text)` (only you see it) | `chat` |
-| `xtx.storage.read(name)`, `.write(name, text)`, `.delete(name)` | `storage` |
-| `xtx.world.block(x, y, z)`, `xtx.world.player()` | `world.read` |
-| `xtx.world.entities(radius)` | `entities.read` |
-| `xtx.world.mine({{x=,y=,z=}, ...}, {silk="tool"\|"always"\|"never", durability=n})` | `world.mine` |
-| `xtx.draw.box(minX, minY, minZ, maxX, maxY, maxZ, color, onTop)` | `render` |
-| `xtx.xray.active()`, `.blocks()`, `.add(id)`, `.remove(id)` | `xray` |
-
-World functions return nothing on servers without the X To Xray server side.
+**[Read the full API reference](docs/api.md)**: HUD, drawing, player, world, input, sound, game options, Xray, timers, commands, storage and more.
 
 ## Limits
 

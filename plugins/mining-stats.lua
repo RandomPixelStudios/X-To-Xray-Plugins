@@ -3,11 +3,11 @@
   "format": 1,
   "id": "mining-stats",
   "name": "Mining Stats",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Counts the ores you mine and keeps your all-time totals",
   "author": "OreGoblin42",
   "categories": ["Mining", "Utility"],
-  "permissions": ["chat", "storage"]
+  "permissions": ["chat", "storage", "hud"]
 }
 ]]
 
@@ -16,7 +16,8 @@ local SAVE_EVERY = 10
 
 xtx.ui.toggle("enabled", "Enabled", true)
 xtx.ui.toggle("all_blocks", "Count All Blocks", false)
-xtx.ui.slider("report_every", "Report Every X Blocks", 1, 500, 50)
+xtx.ui.toggle("show_hud", "Show On HUD", true)
+xtx.ui.slider("report_every", "Chat Report Every X Blocks", 1, 500, 50)
 
 local totals = {}
 local session = 0
@@ -71,5 +72,19 @@ xtx.on("block_mined", function(block)
   session = session + 1
   unsaved = unsaved + 1
   if unsaved >= SAVE_EVERY then save() end
+  xtx.actionbar("+1 " .. short_name(block) .. " (" .. totals[block] .. ")")
   if session % xtx.setting("report_every") == 0 then report() end
 end)
+
+xtx.on("hud", function()
+  if not xtx.setting("enabled") or not xtx.setting("show_hud") then return end
+  xtx.hud.rect(2, 2, 104, 15, 0x80000000)
+  xtx.hud.text("Session Ores: " .. session, 5, 5, 0xFFFFD700)
+end)
+
+xtx.command("stats", function()
+  report()
+end)
+
+xtx.on("leave", save)
+xtx.on("shutdown", save)
