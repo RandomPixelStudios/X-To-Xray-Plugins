@@ -1,193 +1,167 @@
-# Plugin API reference
+# X To Xray Plugin API
 
-For X To Xray **2026.31** and newer, on Minecraft 26.1 to 26.3. New to plugins? Start with the [publishing guide](../publish.md).
+Plugins are single `.lua` files. They run in a sandbox (no files, network or OS access) with a CPU budget per call.
+Everything a plugin can do goes through the global table `xtx`. Parts that need a permission only exist when the
+plugin declares that permission in its header, so `if xtx.hud then ... end` is a valid check.
 
-Everything goes through the global table `xtx`. A function only exists if the plugin lists its permission in the header, so calling it without one fails with `attempt to index nil` or `attempt to call nil`.
-
-## Contents
-
-[Permissions](#permissions) · [Events](#events) · [Core](#core) · [Settings menu](#settings-menu) · [HUD](#hud) · [Drawing in the world](#drawing-in-the-world) · [Chat and screen messages](#chat-and-screen-messages) · [Player](#player) · [World](#world) · [Input](#input) · [Sound](#sound) · [Game options](#game-options) · [Xray](#xray) · [Storage](#storage) · [Limits](#limits) · [What plugins cannot do](#what-plugins-cannot-do)
+```lua
+--[[xtoxray
+{
+  "format": 1,
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "version": "1.0.0",
+  "description": "What it does",
+  "author": "You",
+  "categories": ["Utility"],
+  "permissions": ["chat", "hud"]
+}
+]]
+```
 
 ## Permissions
 
-| Permission | Unlocks |
+| Key | Unlocks |
 |---|---|
 | `storage` | `xtx.storage` |
-| `chat` | `xtx.chat`, `xtx.actionbar`, `xtx.title` |
-| `chat.read` | the `chat_message` event |
-| `hud` | `xtx.hud`, the `hud` event |
-| `render` | `xtx.draw`, the `render` event |
-| `player.read` | `xtx.player.info`, `xtx.player.inventory` |
-| `player.control` | `xtx.player.set_look`, `.select_slot`, `.set_control` |
-| `world.read` | `xtx.world.block`, `.player`, `.info`, `.light`, `.biome`, `.looking_at` |
+| `world.read` | blocks, position, biome, light, world info, world events |
 | `world.mine` | `xtx.world.mine` |
-| `entities.read` | `xtx.world.entities`, `.entity_list` |
+| `entities.read` | `xtx.world.entities`, `entity_list`, `players` |
+| `render` | `xtx.draw`, event `render` |
+| `xray` | `xtx.xray` |
+| `chat` | `xtx.chat`, `actionbar`, `title`, `notify` |
+| `chat.read` | event `chat_message` |
+| `chat.send` | `xtx.send` (1 message per second) |
+| `clipboard` | `xtx.copy` |
+| `hud` | `xtx.hud`, event `hud` |
+| `player.read` | `xtx.player.info`, `inventory`, `effects`, player events |
+| `player.control` | `set_look`, `select_slot`, `set_control`, `drop` |
 | `input` | `xtx.input` |
 | `sound` | `xtx.sound` |
 | `options` | `xtx.options` |
-| `xray` | `xtx.xray` |
 
-## Events
+## Events: `xtx.on(event, function)`
 
-Register with `xtx.on(event, function)`.
-
-| Event | Arguments | Notes |
+| Event | Arguments | Permission |
 |---|---|---|
-| `tick` | none | 20 times per second, also in menus |
-| `block_mined` | `block, x, y, z` | You broke a block. Not fired for blocks broken by `xtx.world.mine` |
-| `xray_toggle` | `active` | |
-| `hud` | none | Every frame. The only place where `xtx.hud` drawing works |
-| `render` | none | Every frame. Use `xtx.draw` here |
-| `join` / `leave` | none | Entering or leaving a world or server |
-| `shutdown` | none | The game closes or the plugin is stopped. Save your data here |
-| `chat_message` | `text, kind` | `kind` is `"chat"` or `"game"`. Return `false` to hide the message. Needs `chat.read` |
-
-## Core
-
-No permission needed.
-
-| Function | Description |
-|---|---|
-| `xtx.log(text)` | Writes to the game log |
-| `xtx.after(ticks, fn)` | Runs `fn` once. Returns a timer id |
-| `xtx.every(ticks, fn)` | Runs `fn` repeatedly. Returns a timer id |
-| `xtx.cancel(id)` | Stops a timer |
-| `xtx.command(name, fn)` | Adds `/xtx <name> <arguments>`. `fn` receives the arguments as one string. `/xtx` alone lists all commands |
-| `xtx.time()` | Current time in milliseconds |
-| `xtx.json.encode(value)` | Table to JSON text |
-| `xtx.json.decode(text)` | JSON text to table |
-
-Lua's `string`, `table`, `math` and `bit32` libraries are available.
-
-## Settings menu
-
-Each widget appears in the plugin's own tab of the config menu. Values are saved for you.
-
-| Function | Description |
-|---|---|
-| `xtx.ui.toggle(key, label, default)` | On or off |
-| `xtx.ui.slider(key, label, min, max, default)` | Whole numbers |
-| `xtx.ui.cycle(key, label, options, default)` | Choose one of a list |
-| `xtx.ui.blocks(key, label, ids)` | Block list |
-| `xtx.setting(key)` | Reads a value |
-| `xtx.set_setting(key, value)` | Changes a value |
-
-## HUD
-
-Permission: `hud`. Colors are `0xAARRGGBB`; an alpha of `00` is invisible.
-
-| Function | Description |
-|---|---|
-| `xtx.hud.text(text, x, y, color, shadow)` | Draws text, at most 80 characters |
-| `xtx.hud.rect(x1, y1, x2, y2, color)` | Draws a filled rectangle |
-| `xtx.hud.item(id, x, y)` | Draws an item such as `"minecraft:diamond"` |
-| `xtx.hud.size()` | Returns screen width and height |
-| `xtx.hud.text_width(text)` | Width of a text |
-| `xtx.hud.hide(part)` / `xtx.hud.show(part)` | Hides or restores a vanilla part |
-
-Parts: `hotbar`, `health`, `armor`, `food`, `air`, `mount_health`, `experience_bar`, `experience_level`, `crosshair`, `effects`, `boss_bar`, `scoreboard`, `chat`, `player_list`, `subtitles`, `title`, `overlay_message`, `held_item_tooltip`.
-
-```lua
-xtx.hud.hide("hotbar")
-xtx.on("hud", function()
-  xtx.hud.text("Hello!", 5, 5, 0xFFFFD700)
-end)
-```
-
-## Drawing in the world
-
-Permission: `render`. Call inside the `render` event. Up to 4096 shapes per frame.
-
-| Function | Description |
-|---|---|
-| `xtx.draw.box(minX, minY, minZ, maxX, maxY, maxZ, color, onTop)` | Box outline |
-| `xtx.draw.line(x1, y1, z1, x2, y2, z2, color, width)` | Line |
-| `xtx.draw.text(text, x, y, z, color, scale)` | Floating text above a block position |
-
-## Chat and screen messages
-
-Only you see these. Plugins cannot send chat messages or commands to a server.
-
-| Function | Permission |
-|---|---|
-| `xtx.chat(text)` | `chat` |
-| `xtx.actionbar(text)` | `chat` |
-| `xtx.title(title, subtitle)` | `chat` |
-
-## Player
-
-| Function | Permission | Description |
-|---|---|---|
-| `xtx.player.info()` | `player.read` | Table with `name`, `health`, `max_health`, `armor`, `food`, `saturation`, `air`, `level`, `xp_progress`, `selected_slot`, `held_item`, `on_ground`, `sneaking`, `sprinting`, `creative`, `spectator`. Also `x`, `y`, `z`, `yaw`, `pitch` where world access is allowed |
-| `xtx.player.inventory()` | `player.read` | List of `{slot, id, count, damage, max_damage}` |
-| `xtx.player.set_look(yaw, pitch)` | `player.control` | Turns your view |
-| `xtx.player.select_slot(slot)` | `player.control` | Hotbar slot 0 to 8 |
-| `xtx.player.set_control(name, down)` | `player.control` | `forward`, `back`, `left`, `right`, `jump`, `sneak`, `sprint`, `attack`, `use`. Does nothing while a menu is open. Released when the plugin stops |
-
-## World
-
-World functions return nothing on servers without the X To Xray server side.
-
-| Function | Permission | Returns |
-|---|---|---|
-| `xtx.world.block(x, y, z)` | `world.read` | Block id |
-| `xtx.world.player()` | `world.read` | `x, y, z` |
-| `xtx.world.info()` | `world.read` | `{dimension, game_time, raining, thundering}` |
-| `xtx.world.light(x, y, z)` | `world.read` | Light level |
-| `xtx.world.biome(x, y, z)` | `world.read` | Biome id |
-| `xtx.world.looking_at(reach)` | `world.read` | `{block, x, y, z, face}` or nil. Reach is 5 by default, at most 128 |
-| `xtx.world.entities(radius)` | `entities.read` | List of `{kind, min_x, min_y, min_z, max_x, max_y, max_z}` |
-| `xtx.world.entity_list(radius)` | `entities.read` | List of `{id, type, kind, name, x, y, z, distance, health, max_health}`. Radius is at most 256 |
-| `xtx.world.mine(blocks, options)` | `world.mine` | Breaks `{{x=,y=,z=}, ...}`, at most 1024. Options: `silk` is `"tool"`, `"always"` or `"never"`; `durability` is 0 to 10 per extra block |
-
-`kind` is `player`, `hostile`, `friendly` or `other`.
-
-## Input
-
-Permission: `input`. Key names look like `key.keyboard.h`. Keys always read as not pressed while a menu or the chat is open, so plugins cannot read what you type.
-
-| Function | Description |
-|---|---|
-| `xtx.input.is_down(key)` | Whether the key is held |
-| `xtx.input.bind(key, fn)` | Runs `fn` each time the key is pressed |
-
-## Sound
-
-Permission: `sound`.
-
-`xtx.sound.play(id, volume, pitch)` plays a sound such as `"minecraft:ui.button.click"`. Volume is 0 to 1, pitch is 0.5 to 2.
-
-## Game options
-
-Permission: `options`.
-
-`xtx.options.get(name)` and `xtx.options.set(name, value)` work with `fov`, `gamma`, `render_distance` and `view_bobbing`.
-
-## Xray
-
-Permission: `xray`.
-
-| Function | Description |
-|---|---|
-| `xtx.xray.active()` / `.set_active(on)` | Reads or switches Xray. Refused on servers without the server side |
-| `xtx.xray.blocks()` | Whitelist as a list of ids |
-| `xtx.xray.add(id)` / `.remove(id)` | Changes the whitelist |
-| `xtx.xray.night_vision()` / `.set_night_vision(on)` | Night vision setting |
-| `xtx.xray.render_distance()` / `.set_render_distance(n)` | Xray distance, 1 to 64 |
-
-## Storage
-
-Permission: `storage`. Private text files for your plugin, up to 1 MiB each and 16 MiB in total.
-
-`xtx.storage.read(name)`, `xtx.storage.write(name, text)`, `xtx.storage.delete(name)`. Names cannot contain paths.
+| `tick` | – | – |
+| `join`, `leave`, `shutdown` | – | – |
+| `block_mined` | block id, x, y, z | – |
+| `xray_toggle` | active | – |
+| `setting_change` | key, value (changed in the settings screen) | – |
+| `plugin_message` | channel, payload, from plugin id | – |
+| `render` | – | `render` |
+| `hud` | – | `hud` |
+| `chat_message` | text, `"game"` or `"chat"`; return `false` to hide | `chat.read` |
+| `health_change` | new, old | `player.read` |
+| `death` | `{x, y, z, dimension}` (nil without `world.read`) | `player.read` |
+| `respawn` | – | `player.read` |
+| `slot_change` | new, old | `player.read` |
+| `level_up` | new, old | `player.read` |
+| `food_change` | new, old | `player.read` |
+| `held_item_change` | new id, old id | `player.read` |
+| `dimension_change` | new, old | `world.read` |
+| `biome_change` | new, old | `world.read` |
+| `weather_change` | `"clear"`/`"rain"`/`"thunder"` new, old | `world.read` |
+| `day_change` | `true` at sunrise, `false` at sunset | `world.read` |
 
 ## Limits
 
-- Every call has a CPU budget. A plugin that exceeds it, or has 5 errors, is stopped.
-- 256 timers, 64 commands, 64 key binds, 32 settings.
-- 4096 HUD calls per frame.
-- Text you display is cut to 80 characters and formatting codes are removed.
+A plugin is stopped when it breaks one of these, the game keeps running:
 
-## What plugins cannot do
+- 5 million steps per call (Lua instructions plus pattern matching steps)
+- 128 MiB allocated per call and 64 MiB kept in memory overall
+- strings of at most 1 MiB, call depth of at most 400
+- `storage`: 1 MiB per file, 16 MiB and 256 files in total
 
-Plugins cannot access files outside their storage, the network, Java or Minecraft internals. They cannot send chat messages or commands to servers, read keys while you type, or add new blocks, items or menus. This is deliberate: it is what keeps plugins from being able to harm your computer or your accounts.
+Messages from `plugin_message` can come from any plugin. Never let a message trigger something that needs a
+permission (sending chat, mining, moving the player) without checking the sender id.
+
+## Core
+
+| Function | Notes |
+|---|---|
+| `xtx.log(text)` | game log |
+| `xtx.time()` / `xtx.ticks()` / `xtx.fps()` | ms since epoch / ticks since start / current FPS |
+| `xtx.screen()` | `"none"`, `"chat"`, `"inventory"`, `"pause"`, `"other"` |
+| `xtx.plugin` | `{id, name, version, author, permissions}` |
+| `xtx.has_permission(key)` | |
+| `xtx.after(ticks, f)`, `xtx.every(ticks, f)`, `xtx.cancel(id)` | timers |
+| `xtx.after_seconds(s, f)`, `xtx.every_seconds(s, f)`, `xtx.seconds(s)` | timers in seconds |
+| `xtx.once(event, f)` | handler that runs one time |
+| `xtx.when(check, f, timeout)` | runs `f(true)` once `check()` is true, `f(false)` on timeout |
+| `xtx.throttle(ticks, f)` | wrapped `f` that runs at most once per `ticks` |
+| `xtx.command(name, f)` | `/xtx name args` |
+| `xtx.subcommands(name, {sub = f, default = f})` | `/xtx name sub args` with usage message |
+| `xtx.events.on/emit/off` | events inside your plugin |
+| `xtx.broadcast(channel, text)`, `xtx.broadcast_json(channel, table)` | message other plugins |
+| `xtx.on_message(channel, f(data, from), as_json)` | receive them (next tick) |
+| `xtx.json.encode(v)`, `xtx.json.decode(text)` | |
+| `xtx.setting(key)`, `xtx.set_setting(key, value)`, `xtx.setting_ticks(key)` | |
+
+## Settings screen: `xtx.ui`
+
+`toggle(key, label, default)`, `slider(key, label, min, max, default)`, `cycle(key, label, {options}, default)`,
+`blocks(key, label, {ids})`, `text(key, label, default)` (max 256 chars), `button(key, label, f)`.
+
+## Helpers: `xtx.util`
+
+`clamp`, `lerp`, `round(v, decimals)`, `distance(x1,y1,z1,x2,y2,z2)`, `distance2d`, `split(s, sep)`, `trim`,
+`starts_with`, `ends_with`, `contains(t, v)`, `keys(t)`, `count(t)`, `copy(t)`, `map(t, f)`, `filter(t, f)`,
+`short_name(id)`, `pretty_name(id)` ("Diamond Ore"), `format_number(n)` ("1,234"), `format_time(seconds)`,
+`format_coords(x, y, z)`, `direction(yaw)` ("North East"), `look_angles(from..., to...)`, `random_choice(t)`.
+
+## Colors: `xtx.color`
+
+Colors are ARGB numbers like `0xFFFF0000`. `rgb(r, g, b, a)`, `hex("#RRGGBB")`, `split(c)`, `with_alpha(c, a)`,
+`lerp(c1, c2, t)`, `hsv(h, s, v, a)`, `rainbow(step, speed)`, `health(fraction)` (green to red), and constants
+`WHITE BLACK GRAY RED GREEN BLUE YELLOW AQUA PURPLE GOLD SHADOW`.
+
+## Chat and screen (`chat`)
+
+`xtx.chat(text)`, `xtx.actionbar(text)`, `xtx.title(title, subtitle)`, `xtx.notify(title, text)` (toast).
+With `chat.send`: `xtx.send(text)` sends a chat message or a `/command`; returns `false` while on cooldown.
+With `clipboard`: `xtx.copy(text)`.
+
+## HUD (`hud`)
+
+Basic: `size()`, `text_width(t)`, `text(t, x, y, color, shadow)`, `rect(x1, y1, x2, y2, color)`, `item(id, x, y)`,
+`hide(part)`, `show(part)`.
+Helpers: `outline(x1, y1, x2, y2, color, thickness)`, `text_centered(t, cx, y, color)`, `text_right(t, right, y, color)`,
+`progress(x, y, w, h, value, max, fg, bg)`, `panel(lines, {anchor, x, y, padding, background, border, color})`.
+A panel line is a string or `{text, color, item}`; anchors: `top_left`, `top_right`, `bottom_left`, `bottom_right`, `center`.
+
+## World (`world.read`, `entities.read`, `world.mine`)
+
+`block(x, y, z)`, `block_state(x, y, z)` → `{id, air, solid, liquid, hardness, properties}`, `height(x, z)`,
+`player()` → x, y, z, `player_block()`, `distance_to(x, y, z)`, `info()` → `{dimension, game_time, day_time, day,
+is_day, raining, thundering, singleplayer, server_has_mod, min_y, max_y}`, `light(x, y, z)`, `biome(x, y, z)`,
+`looking_at(reach)`, `is_air(x, y, z)`, `each_block(x1, y1, z1, x2, y2, z2, f)`,
+`find_blocks(ids, radius ≤ 16, max ≤ 256)` → nearest first `{x, y, z, block, distance}`.
+Entities: `entities(radius)`, `entity_list(radius)`, `nearest_entity(radius, kind_or_type)`,
+`count_entities(radius, kind_or_type)`, `players()` (tab list names).
+Mining: `mine({{x, y, z}, ...}, {silk = "tool"|"always"|"never", durability = 0..10})`.
+
+## Player (`player.read`, `player.control`)
+
+`info()` (health, food, level, xp, held item/count/damage, offhand, position, velocity, flags like `on_ground`,
+`in_water`, `flying`...), `inventory()`, `effects()`, `find_item(id)`, `count_item(id)`, `has_effect(id)`.
+Control: `set_look(yaw, pitch)`, `look_at(x, y, z)`, `select_slot(0..8)`, `select_item(id)`,
+`set_control(name, down)`, `press(name, ticks)`, `drop(all)`.
+
+## Render (`render`)
+
+`box(...)`, `line(...)`, `text(t, x, y, z, color, scale)`, `block(x, y, z, color, on_top)`,
+`circle(x, y, z, radius, color, segments)`, `tracer(x, y, z, color)`, `path(points, color)`.
+
+## Storage (`storage`)
+
+`read(name)`, `write(name, text)`, `delete(name)`, `list()`, `exists(name)`, `append(name, line)`,
+`read_json(name, fallback)`, `write_json(name, table)`. 1 MiB per file, 16 MiB per plugin.
+
+## Xray, input, sound, options
+
+`xtx.xray`: `active`, `set_active`, `blocks`, `add`, `remove`, `night_vision`, `set_night_vision`,
+`render_distance`, `set_render_distance`.
+`xtx.input`: `is_down("key.keyboard.g")`, `bind(key, f)`. `xtx.sound.play(id, volume, pitch)`.
+`xtx.options.get/set("fov" | "gamma" | "render_distance" | "view_bobbing", value)`.
