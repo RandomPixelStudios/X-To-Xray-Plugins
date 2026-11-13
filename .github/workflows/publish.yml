@@ -1,4 +1,4 @@
-name: Publish signed index
+name: Publish plugins
 on:
   push:
     branches: [main]
@@ -14,22 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - run: mkdir "$RUNNER_TEMP/out" && python3 tools/build_index.py --out "$RUNNER_TEMP/out/index.json"
-      - name: Upload new plugin versions (download counter)
+      - name: Validate and build the index
+        run: mkdir "$RUNNER_TEMP/out" && python3 tools/build_index.py --out "$RUNNER_TEMP/out/index.json" --releases "$RUNNER_TEMP/releases.json"
+      - name: Release new plugin versions
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release view plugins >/dev/null 2>&1 || gh release create plugins --title "Plugin downloads" --notes "Plugin files. Download counts come from here."
-          existing=$(gh release view plugins --json assets --jq '.assets[].name')
-          for file in plugins/*.lua; do
-            id=$(basename "$file" .lua)
-            version=$(python3 -c "import json,sys; s=open(sys.argv[1],encoding='utf-8').read(); print(json.loads(s[len('--[[xtoxray'):s.find(']]')])['version'])" "$file")
-            asset="$id-$version.lua"
-            if ! printf '%s\n' "$existing" | grep -qx "$asset"; then
-              cp "$file" "$RUNNER_TEMP/$asset"
-              gh release upload plugins "$RUNNER_TEMP/$asset"
-            fi
-          done
+        run: bash tools/releases.sh publish "$RUNNER_TEMP/releases.json"
       - name: Sign
         env:
           SIGNING_KEY: ${{ secrets.INDEX_SIGNING_KEY }}

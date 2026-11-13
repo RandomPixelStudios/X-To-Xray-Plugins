@@ -1,10 +1,26 @@
 # Publish your plugin
 
-This guide takes you from an idea to a plugin that everyone can install from the **Plugins** tab of X To Xray. You only need a text editor and a free GitHub account.
+Plugins you add here appear in the **Plugins** tab of [X To Xray](https://github.com/RandomPixelStudios/X-To-Xray).
+You need a text editor and a free GitHub account.
 
-## 1. Write the plugin
+> **Every developer is responsible for their own plugins.** Random Pixel Studios checks that a plugin follows the
+> rules below, but does not take responsibility for what plugins do.
 
-A plugin is one Lua file. Create `my-plugin.lua`. The file name must match the `id`:
+## 1. Create your folder
+
+The folder name is your plugin id: lowercase letters, digits, `-` and `_`, 2 to 32 characters.
+
+```
+my-plugin/
+├── modfiles/
+│   └── my-plugin.lua   your plugin, exactly one .lua file
+├── icon.png            optional: square PNG, 16x16 to 256x256, at most 64 KiB
+└── info.md             what X To Xray shows about your plugin
+```
+
+## 2. Write the plugin
+
+`modfiles/my-plugin.lua` starts with a header. The `id` must equal the folder name:
 
 ```lua
 --[[xtoxray
@@ -13,76 +29,63 @@ A plugin is one Lua file. Create `my-plugin.lua`. The file name must match the `
   "id": "my-plugin",
   "name": "My Plugin",
   "version": "1.0.0",
-  "description": "Tells you how many blocks you mined",
-  "author": "YourName",
-  "categories": ["Utility"],
   "permissions": ["chat"]
 }
 ]]
 
 local mined = 0
-
 xtx.on("block_mined", function(block, x, y, z)
   mined = mined + 1
   xtx.chat("Blocks mined: " .. mined)
 end)
 ```
 
-Header rules:
+Everything a plugin can do is described in the [API reference](docs/api.md). Plugins run in a sandbox without
+access to files, the network or Minecraft internals. Ask only for the permissions you need: players see them before
+they install.
 
-- The header must be the very first thing in the file.
-- `id`: 2 to 32 characters using `a-z`, `0-9`, `_` and `-`.
-- `version`: letters, digits, `.` and `_` only.
-- `permissions`: list only what your plugin needs. See the [API reference](docs/api.md).
+## 3. Write info.md
 
-## 2. Test it
+X To Xray **always** shows the data from `info.md`, not from the Lua header:
 
-1. Start Minecraft with X To Xray and open the config menu.
-2. Open the **Plugins** tab and drag your `.lua` file onto the window.
-3. Open **Installed** and click **Allow**.
-4. Try your plugin in a world. Errors appear in the game log.
+```markdown
+---
+name: My Plugin
+developer: YourName
+updated: 2026-11-13
+summary: One sentence that tells players what the plugin does.
+category: Mining, Utility
+license: MIT
+---
 
-## 3. Add it with a pull request
+## What it adds
 
-A pull request asks the maintainers to add your file to the official list. You can do everything on the GitHub website:
+Everything below the second `---` is the long description on the plugin page.
 
-1. Sign in to GitHub and open the [plugins folder](https://github.com/RandomPixelStudios/X-To-Xray-Plugins/tree/main/plugins).
-2. Click **Add file**, then **Upload files**. If GitHub asks you to fork the repository, accept.
-3. Drag in `my-plugin.lua`. Add nothing else: only `.lua` files are allowed in this folder.
-4. Choose **Create a new branch** if GitHub offers it, then click **Propose changes**.
-5. Check the summary and click **Create pull request**.
-6. Describe what your plugin does and why it needs its permissions, then click **Create pull request** again.
+- Lists, **bold** text and `## headings` are shown.
+```
 
-## 4. Wait for the review
+| Field | Required | |
+|---|---|---|
+| `name` | yes | up to 40 characters |
+| `developer` | yes | your name, up to 40 characters |
+| `updated` | yes | date of your last change, `YYYY-MM-DD` |
+| `summary` | yes | up to 200 characters |
+| `category` | no | up to 4, separated by commas |
+| `license` | no | for example `MIT` |
 
-- An automatic check validates your file. If it shows a red cross, open **Details**, fix the problem, and upload the file again to the same branch.
-- A maintainer reads your code and may ask for changes.
-- After the merge, your plugin appears in the Plugins tab of every player once their plugin list refreshes (the next time they start the game).
+## 4. Open a pull request
 
-## 5. Publish an update
+Fork this repository, add your folder and open a pull request. A check validates your plugin automatically. After
+the merge, GitHub releases your plugin as `my-plugin-v1.0.0` and it shows up in the game within minutes.
 
-1. Change your code and raise `version` in the header.
-2. Open your file in the plugins folder, click the pencil icon, and replace the content.
-3. Click **Commit changes**, then **Propose changes**, and create a pull request as before.
+## Updates
 
-Players see an **Update** button after the merge. They review the permissions again before updating.
+Replace the Lua file in `modfiles/`, raise `"version"` in its header and set `updated` in `info.md`. A version that
+was released once can never change, so the check fails if you change the code without raising the version.
 
-## Rules
+## Reporting a plugin
 
-Plugins are rejected if they:
-
-- hide what they do or use deliberately unreadable code,
-- request permissions they do not need,
-- damage worlds or mine blocks without the player expecting it,
-- give an advantage on servers that do not allow it,
-- copy another author's work without permission.
-
-If a published plugin turns out to be harmful, it is blocked for all players.
-
-## Need help?
-
-[Open an issue](https://github.com/RandomPixelStudios/X-To-Xray-Plugins/issues) and describe your problem.
-
-## Disclaimer
-
-Plugins are created by third parties and are used at your own risk. Random Pixel Studios does not guarantee that any plugin is safe, correct or free of errors, even after review. To the extent permitted by law, Random Pixel Studios is not responsible for damage caused by plugins, including lost worlds, lost data or problems with your computer.
+If a plugin misbehaves, use **Report this plugin** on its page in the game, or
+[open an issue](https://github.com/RandomPixelStudios/X-To-Xray-Plugins/issues/new). Plugins that break the rules
+are removed and blocked in the game.
